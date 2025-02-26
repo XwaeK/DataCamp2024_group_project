@@ -42,7 +42,6 @@ class WMAE(rw.score_types.BaseScoreType):
     def __call__(self, y_true, y_pred):
         # Initialisation de la somme des erreurs pondérées
         total_weighted_error = 0
-        total_weights = 0
 
         # Calculer le WMAE pour chaque catégorie et sommer
         for category, weight in self.weights.items():
@@ -81,7 +80,8 @@ def get_cv(X, y):
         train_idx = chunks[chunks != "val"].index
         val_idx = chunks[chunks == "val"].index
         yield train_idx, val_idx
-        # yield X.query("chunk != 'val'").index, X.query("chunk == 'val'").index
+        # yield X.query("chunk != 'val'").index, 
+        # X.query("chunk == 'val'").index
 
     return split()
 
@@ -167,7 +167,8 @@ def preprocess():
 
     print("Traitement des données...")
     print("   - Interventions_features")
-    # Suppression des lignes qui n'ont que des valeurs NaN dans interventions_features
+    # Suppression des lignes qui n'ont que des valeurs NaN dans
+    # interventions_features
     interventions_features = interventions_features.dropna(how="all")
 
     # Fonction de mise en forme de la date
@@ -290,7 +291,7 @@ def preprocess():
     # Vérification et intégration des données de communes_features
     if not communes_features["code_insee"].isin(X_train["code_insee"]).all():
         print(
-            "Le fichier communes_features contient des communes non présentes dans X_train"
+            "communes_features a des communes non présentes dans X_train"
         )
 
     # Création des colonnes dans X_train et X_test pour les communes_features
@@ -344,7 +345,7 @@ def preprocess():
         .all()
     ):
         print(
-            "Le fichier des variability_features contient des communes non présentes dans X_train"
+            "variability_features a des communes non présentes dans X_train"
         )
 
     variability_features["date"] = (
@@ -408,5 +409,6 @@ def preprocess():
 
     print("Preprocessing and data merging completed successfully !")
     print(
-        "-> Datasets saved in 'data' folder as X_train.h5, X_test.h5, y_train.h5 and y_test.h5"
+        "-> Datasets saved in 'data' folder as "
+        "X_train.h5, X_test.h5, y_train.h5 and y_test.h5"
     )

@@ -3,10 +3,14 @@ import os
 
 # Liens vers les trois datasets
 datasets = [
-    "https://www.data.gouv.fr/fr/datasets/r/d7e5740b-9c28-4caa-9801-8354390a9bcb",
-    "https://www.data.gouv.fr/fr/datasets/r/5d8dc837-ff82-420f-9130-5ea456293288",
-    "https://www.data.gouv.fr/fr/datasets/r/cc19ff95-8ff8-43b7-a180-c84258a5c0c3",
-    "https://www.data.gouv.fr/fr/datasets/r/90d589c8-0849-4392-852c-78bfcd820785",
+    "https://www.data.gouv.fr/fr/datasets/r/d7e5740b-9c28-4caa-9801-"
+    "8354390a9bcb",
+    "https://www.data.gouv.fr/fr/datasets/r/5d8dc837-ff82-420f-9130-"
+    "5ea456293288",
+    "https://www.data.gouv.fr/fr/datasets/r/cc19ff95-8ff8-43b7-a180-"
+    "c84258a5c0c3",
+    "https://www.data.gouv.fr/fr/datasets/r/90d589c8-0849-4392-852c-"
+    "78bfcd820785",
 ]
 
 # Dossier de destination pour les fichiers téléchargés
