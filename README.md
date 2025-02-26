@@ -15,7 +15,7 @@ This challenge involves predicting the number of firefighter interventions in th
 The objective is to build predictive models that can estimate the weekly number of interventions for each category at the municipal level, using historical intervention data and various contextual features, including demographic, meteorological, pollution, and socio-economic factors.
 
 
-Authors : Tristan Waddington, Dimitri Iratchet et Fabien Lagnieu
+Authors : *Tristan Waddington, Dimitri Iratchet et Fabien Lagnieu*
 (IPP / CEMS-T)
 
 ## Getting started
