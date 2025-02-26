@@ -16,9 +16,12 @@ def get_estimator():
     return make_pipeline(
         make_column_transformer(
             ("passthrough", ["age"]),
-            (OrdinalEncoder(
-                handle_unknown='use_encoded_value', unknown_value=-1
-            ), ["gender"]),
+            (
+                OrdinalEncoder(
+                    handle_unknown="use_encoded_value", unknown_value=-1
+                ),
+                ["gender"],
+            ),
         ),
-        IgnoreDomain(n_estimators=50)
+        IgnoreDomain(n_estimators=50),
     )
