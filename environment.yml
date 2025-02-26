@@ -1,6 +1,7 @@
 name: sdis91-estimation
 channels:
   - conda-forge
+  - pytorch
 dependencies:
   - joblib
   - matplotlib
@@ -9,8 +10,11 @@ dependencies:
   - scikit-learn>=1.4
   - pytables
   - h5py
+  - pytorch==2.2.2
   - pip
   - pip:
     - ramp-workflow
     - osfclient
     - physiocurve
+    - skorch==0.15.0
+    - skada==0.4.0

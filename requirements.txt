@@ -2,7 +2,7 @@ ramp-workflow
 numpy
 pandas
 matplotlib
-scikit-learn
+scikit-learn>=1.4
 physiocurve
 h5py
 tables
