@@ -1,4 +1,4 @@
-name: ramp-map-estimation
+name: sdis91-estimation
 channels:
   - conda-forge
 dependencies:
