@@ -134,6 +134,10 @@ def process_data():
     X_df = pd.merge(X_df, yearly_communes, how="left", on="YYYYNNNNN").drop(
         columns=["YYYYNNNNN"]
     )
+    # Ensure consistent type
+    X_df["pollution_commune"] = X_df["pollution_commune"].astype(str)
+    X_df["commune_nom"] = X_df["commune_nom"].astype(str)
+    print("X sucessfully created.")
 
     # ------------------------
     # Step 4 Construct the target
@@ -168,7 +172,7 @@ def process_data():
     )
 
     interventions = create_idx(
-        interventions, "ope_anne", "ope_semaine", "ope_code_insee"
+        interventions, "ope_annee", "ope_semaine", "ope_code_insee"
     )
     y = interventions[["idx", "ope_categorie", "nb_ope"]].fillna(0)
     # Convert columns to int where possible
@@ -187,6 +191,7 @@ def process_data():
         .fillna(0)
         .drop(columns=["YYYYWW"])
     )
+    print("y sucessfully created")
 
     # ------------------------
     # Step 5 Split the dataset
@@ -211,12 +216,13 @@ def process_data():
     # create the data/public dir if not exists
     os.makedirs("data/public", exist_ok=True)
     # public data
-    X_train.to_hdf("data/public/X_train.h5", key="data", mode="w")
-    X_test.to_hdf("data/public/X_test.h5", key="data", mode="w")
-    y_train.to_hdf("data/public/y_train.h5", key="target", mode="w")
-    y_test.to_hdf("data/public/y_test.h5", key="target", mode="w")
+    X_train.to_hdf("data/public/train.h5", key="data", mode="w")
+    X_test.to_hdf("data/public/test.h5", key="data", mode="w")
+    y_train.to_hdf("data/public/train.h5", key="target", mode="a")
+    y_test.to_hdf("data/public/test.h5", key="target", mode="a")
     # private test data
-    X_test_private.to_hdf("data/X_test.h5", key="data", mode="w")
+    X_test_private.to_hdf("data/test.h5", key="data", mode="w")
+    y_test_private.to_hdf("data/test.h5", key="target", mode="w")
 
 
 def preprocess():
