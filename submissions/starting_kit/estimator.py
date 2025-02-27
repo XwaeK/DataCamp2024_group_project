@@ -1,27 +1,22 @@
 from sklearn.pipeline import make_pipeline
-from sklearn.compose import make_column_transformer
+from sklearn.multioutput import MultiOutputRegressor
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.preprocessing import OrdinalEncoder
+from sklearn.preprocessing import FunctionTransformer
+from sklearn import set_config
 
+set_config(transform_output="pandas")
 
-class IgnoreDomain(RandomForestRegressor):
-    def fit(self, X, y):
-        # Ignore the samples with missing target
-        X = X[y != -1]
-        y = y[y != -1]
-        return super().fit(X, y)
-
+def preprocess_data(X, n_columns=10):
+    categorical_columns = X.select_dtypes(include=[object]).columns
+    X_clean = X.drop(columns=categorical_columns)
+    X_clean = X_clean.iloc[:, :n_columns]
+    X_clean.fillna(0, inplace=True)
+    return X_clean
 
 def get_estimator():
     return make_pipeline(
-        make_column_transformer(
-            ("passthrough", ["age"]),
-            (
-                OrdinalEncoder(
-                    handle_unknown="use_encoded_value", unknown_value=-1
-                ),
-                ["gender"],
-            ),
-        ),
-        IgnoreDomain(n_estimators=50),
+        FunctionTransformer(preprocess_data),
+        MultiOutputRegressor(
+            RandomForestRegressor(n_estimators=50)
+        )
     )
