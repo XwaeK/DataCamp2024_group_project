@@ -1,4 +1,3 @@
-
 import os
 import h5py
 import numpy as np
@@ -80,7 +79,7 @@ def get_cv(X, y):
         train_idx = chunks[chunks != "val"].index
         val_idx = chunks[chunks == "val"].index
         yield train_idx, val_idx
-        # yield X.query("chunk != 'val'").index, 
+        # yield X.query("chunk != 'val'").index,
         # X.query("chunk == 'val'").index
 
     return split()
@@ -290,9 +289,7 @@ def preprocess():
     print("   - Merging communes_features...")
     # Vérification et intégration des données de communes_features
     if not communes_features["code_insee"].isin(X_train["code_insee"]).all():
-        print(
-            "communes_features a des communes non présentes dans X_train"
-        )
+        print("communes_features a des communes non présentes dans X_train")
 
     # Création des colonnes dans X_train et X_test pour les communes_features
     for col in communes_features.columns:
@@ -344,9 +341,7 @@ def preprocess():
         .isin(X_train["code_insee"])
         .all()
     ):
-        print(
-            "variability_features a des communes non présentes dans X_train"
-        )
+        print("variability_features a des communes non présentes dans X_train")
 
     variability_features["date"] = (
         variability_features["cal_annee"] * 100
