@@ -85,7 +85,19 @@ def get_cv(X, y):
     return split()
 
 
-def _load_data(file, start=None, stop=None, load_waveform=True):
+def _load_data(file):
+    """
+    Load data from a CSV file.
+    """
+    X_df = pd.read_hdf(file, key="data")
+    y = X_df["map"]
+    if not file_path.exists():
+        raise FileNotFoundError(f"{file_path} not found.")
+    
+    data = pd.read_csv(file_path, sep=';')
+    return data
+
+def _load_data(file, start=None, stop=None):
     X_df = pd.read_hdf(file, key="data", start=start, stop=stop)
 
     y = X_df["map"]
@@ -397,13 +409,13 @@ def preprocess():
     print("      -> variability_features merged successfully.")
 
     # Sauvegarder les datasets traités en H5
-    X_train.to_hdf("data/X_train.h5", key="data", mode="w")
-    X_test.to_hdf("data/X_test.h5", key="data", mode="w")
-    y_train.to_hdf("data/y_train.h5", key="target", mode="w")
-    y_test.to_hdf("data/y_test.h5", key="target", mode="w")
+    X_train.to_hdf("data/train.h5", key="data", mode="w")
+    X_test.to_hdf("data/test.h5", key="data", mode="w")
+    y_train.to_hdf("data/train.h5", key="target", mode="a")
+    y_test.to_hdf("data/test.h5", key="target", mode="a")
 
     print("Preprocessing and data merging completed successfully !")
     print(
         "-> Datasets saved in 'data' folder as "
-        "X_train.h5, X_test.h5, y_train.h5 and y_test.h5"
+        "train.h5 & test.h5"
     )
