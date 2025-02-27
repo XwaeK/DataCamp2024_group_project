@@ -105,11 +105,10 @@ def _get_data(path=".", split="train"):
     y : DataFrame (, 6)
 
     """
-    X_file = "X_" + split + ".h5"
-    y_file = "y_" + split + ".h5"
-    data_path = Path(path) / "data"
-    X = pd.read_hdf(data_path / X_file)
-    y = pd.read_hdf(data_path / y_file)
+    file = split + ".h5"
+    data_path = Path(path) / "data" / "public"
+    X = pd.read_hdf(data_path / file, key="data", mode="r")
+    y = pd.read_hdf(data_path / file, key="target", mode="r")
 
     if os.environ.get("RAMP_TEST_MODE", False):
         # Launched with --quick-test option; only a small subset of the data
