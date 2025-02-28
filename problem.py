@@ -5,6 +5,7 @@ import pandas as pd
 from pathlib import Path
 import rampwf as rw
 import warnings
+from sklearn.model_selection import GroupShuffleSplit
 
 warnings.filterwarnings("ignore")
 
@@ -12,7 +13,14 @@ warnings.filterwarnings("ignore")
 problem_title = "sdis91-estimation"
 
 # A type (class) which will be used to create wrapper objects for y_pred
-Predictions = rw.prediction_types.make_regression()
+_label_names = [
+    "nb_ope_SUAP",
+    "nb_ope_INCN",
+    "nb_ope_INCU",
+    "nb_ope_ACCI",
+    "nb_ope_AUTR",
+]
+Predictions = rw.prediction_types.make_regression(label_names=_label_names)
 
 # An object implementing the workflow
 workflow = rw.workflows.Estimator()
@@ -39,9 +47,12 @@ class WMAE(rw.score_types.BaseScoreType):
             self.weights = weights
 
     def __call__(self, y_true, y_pred):
+        # Ensure y_true and y_pred are dataframes to use columns names
+        y_true = pd.DataFrame(y_true, columns=_label_names)
+        y_pred = pd.DataFrame(y_pred, columns=_label_names)
         # Initialisation de la somme des erreurs pondérées
         total_weighted_error = 0
-
+        # print(f"Debug: {y_true}")
         # Calculer le WMAE pour chaque catégorie et sommer
         for category, weight in self.weights.items():
             if category in y_true.columns:
@@ -70,19 +81,19 @@ score_types = [
 
 
 def get_cv(X, y):
-    # Make sure the index is a range index so it is compatible with sklearn API
-    X = X.reset_index(drop=True)
+    """Get the cross validation scheme, preserving the commune using
+    GroupShuffleSplit. Group on "code_insee" """
 
-    chunks = X["chunk"].fillna("t")
+    # Convert the insee code to numpy array
+    groups = np.array(X["code_insee"])
+    print(f"Split according to insee {groups.shape[0]} rows")
+    gss = GroupShuffleSplit(n_splits=5, train_size=0.7, random_state=1)
 
-    def split():
-        train_idx = chunks[chunks != "val"].index
-        val_idx = chunks[chunks == "val"].index
-        yield train_idx, val_idx
-        # yield X.query("chunk != 'val'").index,
-        # X.query("chunk == 'val'").index
-
-    return split()
+    # for train_idx, test_idx in gss.split(X, y, groups=groups):
+    #     print(f"Train indices: {train_idx[:10]}... (total {len(train_idx)})")
+    #     print(f"Test indices: {test_idx[:10]}... (total {len(test_idx)})")
+    #     yield train_idx, test_idx
+    return gss.split(X, y, groups=groups)
 
 
 # READ DATA
@@ -100,15 +111,20 @@ def _get_data(path=".", split="train"):
 
     Returns:
     --------
-    X : DataFrame (, 135)
+    X : DataFrame (, 172)
 
-    y : DataFrame (, 6)
+    y : DataFrame (, 5)
 
     """
     file = split + ".h5"
-    data_path = Path(path) / "data" / "public"
-    X = pd.read_hdf(data_path / file, key="data", mode="r")
-    y = pd.read_hdf(data_path / file, key="target", mode="r")
+    data_path = Path(path) / "data" / "public"  # TODO Check the ramp process
+    X = pd.read_hdf(data_path / file, key="data", mode="r").reset_index(
+        drop=True
+    )
+    y = pd.read_hdf(data_path / file, key="target", mode="r").reset_index(
+        drop=True
+    )
+    y = y.to_numpy()
 
     if os.environ.get("RAMP_TEST_MODE", False):
         # Launched with --quick-test option; only a small subset of the data
@@ -119,6 +135,7 @@ def _get_data(path=".", split="train"):
         X = X[quick_test_indices]
         y = y[quick_test_indices]
 
+    print(f"Load {split} data, {X.shape=}, {y.shape=}")
     return X, y
 
 

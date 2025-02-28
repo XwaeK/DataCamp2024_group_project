@@ -53,7 +53,9 @@ def process_data():
     yearly_communes["YYYYNNNNN"] = (
         yearly_communes["annee"] * 100_000 + yearly_communes["code_insee"]
     )
-
+    print(
+        f"Step1: {yearly_communes.columns=}\n\t{yearly_communes.isna().sum().sum()} missing values"
+    )
     # -----------------------
     # Step 2 : variables features
     variable_communes = pd.read_csv(Path("data", "91-variability-features.csv"))
@@ -87,7 +89,9 @@ def process_data():
     var_data = create_idx(
         var_data, "cal_annee", "cal_semaine", "pollution_code_insee"
     )
-
+    print(
+        f"Step2: {var_data.columns=}\n\t{var_data['pollution_code_insee'].isna().sum()} missing insee"
+    )
     # ------------------------
     # Step 3 : construct the final dataset
 
@@ -108,8 +112,9 @@ def process_data():
     ).astype(int)
     # final year week insee index
     all_weeks_communes = (all_weeks[:, None] * 100_000 + all_insee).flatten()
+    print(f"Step3.1: {all_weeks_communes.shape[0]} rows expected")
 
-    # ------------------------
+    # - - - - - - - - - - -
     # Step 3.2 merge with calendar data
     df_index = pd.DataFrame(all_weeks_communes, columns=["idx"])
     df_index["YYYYWW"] = df_index["idx"] // 100_000
@@ -118,7 +123,9 @@ def process_data():
         columns=["YYYYWW"]
     )
 
-    # ------------------------
+    print(f"Step3.2: {X_df.shape[0]} rows created")
+
+    # - - - - - - - - - - -
     # Step 3.3 merge with other variable features
     X_df = pd.merge(
         X_df,
@@ -126,8 +133,11 @@ def process_data():
         on="idx",
         how="left",
     )
+    # override the insee code
 
-    # ------------------------
+    print(f"Step3.3: {X_df.columns=}")
+
+    # - - - - - - - - - - -
     # Step 3.4 merge with the yearly features
     # Create the year insee index
     X_df["YYYYNNNNN"] = X_df["cal_annee"] * 100_000 + X_df["cal_semaine"]
@@ -135,8 +145,12 @@ def process_data():
         columns=["YYYYNNNNN"]
     )
     # Ensure consistent type
+    X_df["code_insee"] = X_df["idx"] % 100_000
     X_df["pollution_commune"] = X_df["pollution_commune"].astype(str)
     X_df["commune_nom"] = X_df["commune_nom"].astype(str)
+    print(
+        f"Step3.4: {X_df.columns=}\n\t{X_df['code_insee'].isna().sum()} missing insee"
+    )
     print("X sucessfully created.")
 
     # ------------------------
@@ -191,6 +205,11 @@ def process_data():
         .fillna(0)
         .drop(columns=["YYYYWW"])
     )
+
+    # prefix the column names with nb_ope_
+    y_df.columns = [
+        "nb_ope_" + col if col != "idx" else col for col in y_df.columns
+    ]
     print("y sucessfully created")
 
     # ------------------------
@@ -198,18 +217,22 @@ def process_data():
     TRAIN_END_DATE = 2018_01_00000
     PUBLIC_TEST_END_DATE = 2018_04_00000
 
-    X_train = X_df[X_df["idx"] < TRAIN_END_DATE]
+    X_train = X_df[X_df["idx"] < TRAIN_END_DATE].drop(columns=["idx"])
     X_test = X_df[
         (X_df["idx"] > TRAIN_END_DATE) & (X_df["idx"] < PUBLIC_TEST_END_DATE)
-    ]
-    X_test_private = X_df[X_df["idx"] > PUBLIC_TEST_END_DATE]
+    ].drop(columns=["idx"])
+    X_test_private = X_df[X_df["idx"] > PUBLIC_TEST_END_DATE].drop(
+        columns=["idx"]
+    )
     print(f"{X_train.shape=}, {X_test.shape=}, {X_test_private.shape=}")
 
-    y_train = y_df[y_df["idx"] < TRAIN_END_DATE]
+    y_train = y_df[y_df["idx"] < TRAIN_END_DATE].drop(columns=["idx"])
     y_test = y_df[
         (y_df["idx"] > TRAIN_END_DATE) & (X_df["idx"] < PUBLIC_TEST_END_DATE)
-    ]
-    y_test_private = y_df[X_df["idx"] > PUBLIC_TEST_END_DATE]
+    ].drop(columns=["idx"])
+    y_test_private = y_df[X_df["idx"] > PUBLIC_TEST_END_DATE].drop(
+        columns=["idx"]
+    )
     print(f"{y_train.shape=}, {y_test.shape=}, {y_test_private.shape=}")
 
     # Save dataset in h5
