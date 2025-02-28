@@ -92,4 +92,4 @@ jobs:
       run: python download_data.py
 
     - name: Check the starting-kit notebook
-      run: jupyter nbconvert --execute map_estimation_starting_kit.ipynb --to html --ExecutePreprocessor.kernel_name=python3
+      run: jupyter nbconvert --execute sdis91_estimation_starting_kit.ipynb --to html --ExecutePreprocessor.kernel_name=python3
