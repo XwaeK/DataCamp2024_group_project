@@ -54,11 +54,15 @@ def process_data():
         yearly_communes["annee"] * 100_000 + yearly_communes["code_insee"]
     )
     print(
-        f"Step1: {yearly_communes.columns=}\n\t{yearly_communes.isna().sum().sum()} missing values"
+        f"Step1: {yearly_communes.columns=}\n\t{
+            yearly_communes.isna().sum().sum()
+        } missing values"
     )
     # -----------------------
     # Step 2 : variables features
-    variable_communes = pd.read_csv(Path("data", "91-variability-features.csv"))
+    variable_communes = pd.read_csv(
+        Path("data", "91-variability-features.csv")
+        )
     # get all the insee code for future reference
     all_insee = (
         variable_communes["pollution_code_insee"].dropna().unique().astype(int)
@@ -90,7 +94,8 @@ def process_data():
         var_data, "cal_annee", "cal_semaine", "pollution_code_insee"
     )
     print(
-        f"Step2: {var_data.columns=}\n\t{var_data['pollution_code_insee'].isna().sum()} missing insee"
+        f"Step2: {var_data.columns=}\n\t{
+            var_data['pollution_code_insee'].isna().sum()} missing insee"
     )
     # ------------------------
     # Step 3 : construct the final dataset
@@ -149,7 +154,8 @@ def process_data():
     X_df["pollution_commune"] = X_df["pollution_commune"].astype(str)
     X_df["commune_nom"] = X_df["commune_nom"].astype(str)
     print(
-        f"Step3.4: {X_df.columns=}\n\t{X_df['code_insee'].isna().sum()} missing insee"
+        f"Step3.4: {X_df.columns=}\n\t{
+            X_df['code_insee'].isna().sum()} missing insee"
     )
     print("X sucessfully created.")
 
@@ -162,7 +168,9 @@ def process_data():
     inter_train = inter_train[~inter_train["ope_code_insee"].isna()]
 
     inter_test = pd.read_csv(
-        Path("data", "interventions-sdis91.csv"), encoding="ISO-8859-1", sep=";"
+        Path("data", "interventions-sdis91.csv"),
+        encoding="ISO-8859-1",
+        sep=";"
     )
     # Keep only 2018 interventions
     inter_test = inter_test[inter_test["ope_annee"] == 2018]
@@ -503,10 +511,14 @@ if __name__ == "__main__":
     """Download the data for the first time"""
     # Liens vers les trois datasets
     datasets = {
-        "interventions-hebdo-2010-2017.csv": "https://www.data.gouv.fr/fr/datasets/r/d7e5740b-9c28-4caa-9801-8354390a9bcb",
-        "91-variability-features.csv": "https://www.data.gouv.fr/fr/datasets/r/5d8dc837-ff82-420f-9130-5ea456293288",
-        "91-communes-features.csv": "https://www.data.gouv.fr/fr/datasets/r/cc19ff95-8ff8-43b7-a180-c84258a5c0c3",
-        "interventions-sdis91.csv": "https://www.data.gouv.fr/fr/datasets/r/90d589c8-0849-4392-852c-78bfcd820785",
+        "interventions-hebdo-2010-2017.csv": "https://www.data.gouv.fr/fr/"
+        "datasets/r/d7e5740b-9c28-4caa-9801-8354390a9bcb",
+        "91-variability-features.csv": "https://www.data.gouv.fr/fr/datasets/"
+        "r/5d8dc837-ff82-420f-9130-5ea456293288",
+        "91-communes-features.csv": "https://www.data.gouv.fr/fr/datasets/r/"
+        "cc19ff95-8ff8-43b7-a180-c84258a5c0c3",
+        "interventions-sdis91.csv": "https://www.data.gouv.fr/fr/datasets/r/"
+        "90d589c8-0849-4392-852c-78bfcd820785",
     }
 
     # Dossier de destination pour les fichiers téléchargés

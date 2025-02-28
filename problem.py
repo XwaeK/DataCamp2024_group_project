@@ -1,5 +1,4 @@
 import os
-import h5py
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -105,9 +104,9 @@ def _get_data(path=".", split="train"):
     Parameters:
     -----------
     path : str, optional
-        The base path to the data directory. Default is current directory (".").
+        The base path to the data directory. Default is current directory (".")
     split : str, optional
-        The data split to retrieve, either "train" or "test". Default is "train".
+        The data split to retrieve, either "train" or "test". Default "train".
 
     Returns:
     --------

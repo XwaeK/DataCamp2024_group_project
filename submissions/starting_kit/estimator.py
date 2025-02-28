@@ -34,5 +34,7 @@ class MultiOutputRegressorTransformer(BaseEstimator, TransformerMixin):
 def get_estimator():
     return make_pipeline(
         FunctionTransformer(preprocess_data),
-        MultiOutputRegressorTransformer(RandomForestRegressor(n_estimators=50)),
+        MultiOutputRegressorTransformer(
+            RandomForestRegressor(n_estimators=50)
+            ),
     )
