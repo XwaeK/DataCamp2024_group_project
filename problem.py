@@ -1,10 +1,10 @@
 import os
-import h5py
 import numpy as np
 import pandas as pd
 from pathlib import Path
 import rampwf as rw
 import warnings
+from sklearn.model_selection import GroupShuffleSplit
 
 warnings.filterwarnings("ignore")
 
@@ -12,7 +12,14 @@ warnings.filterwarnings("ignore")
 problem_title = "sdis91-estimation"
 
 # A type (class) which will be used to create wrapper objects for y_pred
-Predictions = rw.prediction_types.make_regression()
+_label_names = [
+    "nb_ope_SUAP",
+    "nb_ope_INCN",
+    "nb_ope_INCU",
+    "nb_ope_ACCI",
+    "nb_ope_AUTR",
+]
+Predictions = rw.prediction_types.make_regression(label_names=_label_names)
 
 # An object implementing the workflow
 workflow = rw.workflows.Estimator()
@@ -39,9 +46,12 @@ class WMAE(rw.score_types.BaseScoreType):
             self.weights = weights
 
     def __call__(self, y_true, y_pred):
+        # Ensure y_true and y_pred are dataframes to use columns names
+        y_true = pd.DataFrame(y_true, columns=_label_names)
+        y_pred = pd.DataFrame(y_pred, columns=_label_names)
         # Initialisation de la somme des erreurs pondérées
         total_weighted_error = 0
-
+        # print(f"Debug: {y_true}")
         # Calculer le WMAE pour chaque catégorie et sommer
         for category, weight in self.weights.items():
             if category in y_true.columns:
@@ -70,95 +80,67 @@ score_types = [
 
 
 def get_cv(X, y):
-    # Make sure the index is a range index so it is compatible with sklearn API
-    X = X.reset_index(drop=True)
+    """Get the cross validation scheme, preserving the commune using
+    GroupShuffleSplit. Group on "code_insee" """
 
-    chunks = X["chunk"].fillna("t")
+    # Convert the insee code to numpy array
+    groups = np.array(X["code_insee"])
+    print(f"Split according to insee {groups.shape[0]} rows")
+    gss = GroupShuffleSplit(n_splits=5, train_size=0.7, random_state=1)
 
-    def split():
-        train_idx = chunks[chunks != "val"].index
-        val_idx = chunks[chunks == "val"].index
-        yield train_idx, val_idx
-        # yield X.query("chunk != 'val'").index,
-        # X.query("chunk == 'val'").index
-
-    return split()
-
-
-def _load_data(file):
-    """
-    Load data from a CSV file.
-    """
-    X_df = pd.read_hdf(file, key="data")
-    y = X_df["map"]
-    if not file_path.exists():
-        raise FileNotFoundError(f"{file_path} not found.")
-    
-    data = pd.read_csv(file_path, sep=';')
-    return data
-
-def _load_data(file, start=None, stop=None):
-    X_df = pd.read_hdf(file, key="data", start=start, stop=stop)
-
-    y = X_df["map"]
-    X_df = X_df.drop(columns=["map", "sbp", "dbp"], errors="ignore")
-
-    if load_waveform:
-        with h5py.File(file, "r") as f:
-            X_df["ecg"] = list(f["ecg"][start:stop])
-            X_df["ppg"] = list(f["ppg"][start:stop])
-
-    # Replace None value in y by `-1
-    y = y.fillna(-1).values
-
-    return X_df, y
+    # for train_idx, test_idx in gss.split(X, y, groups=groups):
+    #     print(f"Train indices: {train_idx[:10]}... (total {len(train_idx)})")
+    #     print(f"Test indices: {test_idx[:10]}... (total {len(test_idx)})")
+    #     yield train_idx, test_idx
+    return gss.split(X, y, groups=groups)
 
 
 # READ DATA
-def get_train_data(path=".", start=None, stop=None, load_waveform=True):
+def _get_data(path=".", split="train"):
+    """
+    Get the data for the given split (train or test).
+    This function reads the h5 files
 
-    # Avoid loading the data if it is already loaded
-    # We use a global variable in rw as the problem.py module is created
-    # dynamically and the global variables are not always reused.
-    hash_train = hash((str(path), start, stop, load_waveform))
-    if getattr(rw, "HASH_TRAIN", -1) == hash_train:
-        return rw.X_TRAIN, rw.Y_TRAIN
+    Parameters:
+    -----------
+    path : str, optional
+        The base path to the data directory. Default is current directory (".")
+    split : str, optional
+        The data split to retrieve, either "train" or "test". Default "train".
 
-    rw.HASH_TRAIN = hash_train
+    Returns:
+    --------
+    X : DataFrame (, 172)
 
-    train_file = Path(path) / "data" / "train.h5"
-    val_file = Path(path) / "data" / "validation.h5"
+    y : DataFrame (, 5)
+
+    """
+    file = split + ".h5"
+    data_path = Path(path) / "data" / "public"  # TODO Check the ramp process
+    X = pd.read_hdf(data_path / file, key="data", mode="r").reset_index(
+        drop=True
+    )
+    y = pd.read_hdf(data_path / file, key="target", mode="r").reset_index(
+        drop=True
+    )
+    y = y.to_numpy()
+
     if os.environ.get("RAMP_TEST_MODE", False):
-        start_s, stop_s = 0, 1000
-        start_t, stop_t = -1001, -1
-        start_val, stop_val = 0, 100
-    else:
-        start_s, stop_s = 0, int(1.5e5)
-        start_t, stop_t = -int(1.5e5 + 1), -1
-        start_val, stop_val = None, None
-    X_s, y_s = _load_data(train_file, start_s, stop_s, load_waveform)
-    X_t, y_t = _load_data(train_file, start_t, stop_t, load_waveform)
-    X_val, y_val = _load_data(val_file, start_val, stop_val, load_waveform)
-    X_val["chunk"] = "val"
-    X_train = pd.concat([X_s, X_t, X_val], axis=0, ignore_index=True)
-    y_train = np.concatenate([y_s, y_t, y_val], axis=0)
+        # Launched with --quick-test option; only a small subset of the data
+        # Extract simulation numbers from file paths
+        quick_test_indices = [np.arange(100)]
 
-    rw.X_TRAIN, rw.Y_TRAIN = X_train, y_train
-    return X_train, y_train
+        # Select subset of data
+        X = X[quick_test_indices]
+        y = y[quick_test_indices]
+
+    print(f"Load {split} data, {X.shape=}, {y.shape=}")
+    return X, y
 
 
-def get_test_data(path=".", start=None, stop=None, load_waveform=True):
+def get_train_data(path="."):
+    return _get_data(path, "train")
 
-    hash_test = hash((str(path), start, stop, load_waveform))
-    if getattr(rw, "HASH_TEST", -1) == hash_test:
-        return rw.X_TRAIN, rw.Y_TRAIN
 
-    rw.HASH_TEST = hash_test
-
-    file = "test.h5"
-    file = Path(path) / "data" / file
-    if os.environ.get("RAMP_TEST_MODE", False):
-        start, stop = 0, 100
-    rw.X_TEST, rw.Y_TEST = _load_data(file, start, stop, load_waveform)
-    return rw.X_TEST, rw.Y_TEST
-
+def get_test_data(path="."):
+    return _get_data(path, "test")
