@@ -36,7 +36,7 @@ usage.
 ### Challenge description
 
 Get started on this RAMP with the
-[dedicated notebook](https://github.com/ramp-kits/map_estimation/blob/main/map_estimation_starting_kit.ipynb).
+[dedicated notebook](sdis91_estimation_starting_kit.ipynb).
 
 ### Test a submission
 
