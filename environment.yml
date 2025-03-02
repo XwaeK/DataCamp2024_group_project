@@ -10,7 +10,7 @@ dependencies:
   - scikit-learn>=1.4
   - pytables
   - h5py
-  - pytorch==2.2.2
+  - geopandas
   - pip
   - pip:
     - ramp-workflow

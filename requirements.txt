@@ -6,3 +6,4 @@ scikit-learn>=1.4
 h5py
 tables
 osfclient
+geopandas

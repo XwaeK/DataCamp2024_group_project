@@ -1,3 +1,4 @@
 torch==2.2.2
 skorch==0.15.0
 skada==0.4.0
+geopandas==1.0.1
